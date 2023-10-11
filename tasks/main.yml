@@ -12,13 +12,34 @@
     state: present
   when: pgbouncer_install_psql
 
-- name: template config files
+- name: template main config file
   template:
-    src: "{{ item }}"
-    dest: /etc/pgbouncer/{{ item | basename | splitext | first }}
+    src: templates/pgbouncer.ini.j2
+    dest: "{{ pgbouncer_confdir }}/pgbouncer.ini"
     backup: yes
     owner: postgres
     group: postgres
     mode: 0640
-  with_fileglob: templates/*
   notify: "{{ pgbouncer_service_state }} pgbouncer"
+
+- name: template database section of config file
+  template:
+    src: templates/pgbouncer.databases.ini.j2
+    dest: "{{ pgbouncer_confdir }}/pgbouncer.databases.ini"
+    backup: yes
+    owner: postgres
+    group: postgres
+    mode: 0640
+  notify: "{{ pgbouncer_service_state }} pgbouncer"
+  when: pgbouncer_template_databases and pgbouncer_databases|length>0
+
+- name: template userlist
+  template:
+    src: templates/userlist.txt.j2
+    dest: "{{ pgbouncer_confdir }}/userlist.txt"
+    backup: yes
+    owner: postgres
+    group: postgres
+    mode: 0640
+  notify: "{{ pgbouncer_service_state }} pgbouncer"
+  when: pgbouncer_template_userlist and pgbouncer_users|length>0

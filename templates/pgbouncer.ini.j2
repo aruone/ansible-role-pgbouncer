@@ -3,6 +3,7 @@
 ;;; PgBouncer configuration file
 ;;;
 
+;; User-specific configuration
 ;; database name = connect string
 ;;
 ;; connect string params:
@@ -10,10 +11,6 @@
 ;;   client_encoding= datestyle= timezone=
 ;;   pool_size= reserve_pool= max_db_connections=
 ;;   pool_mode= connect_query= application_name=
-[databases]
-{{ pgbouncer_databases | pgbouncer_to_ini }}
-
-;; User-specific configuration
 [users]
 
 ;user1 = pool_mode=transaction max_user_connections=10
@@ -25,8 +22,6 @@
 ;;; Administrative settings
 ;;;
 
-logfile = /var/log/postgresql/pgbouncer.log
-pidfile = /var/run/postgresql/pgbouncer.pid
 
 ;;;
 ;;; Where to wait for clients
@@ -41,7 +36,9 @@ listen_port = {{ pgbouncer_listen_port | default(6432) }}
 ;unix_socket_dir = /tmp
 ;unix_socket_mode = 0777
 ;unix_socket_group =
-unix_socket_dir = /var/run/postgresql
+unix_socket_dir = {{ pgbouncer_unix_socket_dir | default('/var/run/postgresql') }}
+logfile = {{ pgbouncer_logfile | default('/var/log/pgbouncer.log') }}
+pidfile = {{ pgbouncer_pidfile | default('var/run/postgresql/pgbouncer.pid') }}
 
 ;;;
 ;;; TLS settings for accepting clients
@@ -96,15 +93,15 @@ client_tls_cert_file = {{ pgbouncer_client_tls_cert_file | default('') }}
 ;;;
 
 ;; any, trust, plain, md5, cert, hba, pam
-auth_type = {{ pgbouncer_auth_type | default('trust') }}
-auth_file = /etc/pgbouncer/userlist.txt
-
+auth_type = {{ pgbouncer_auth_type | default('md5') }}
+auth_file = {{ pgbouncer_auth_file | default(pgbouncer_confdir + 'userlist.txt') }}
+auth_user = {{ pgbouncer_auth_user | default(omit) }}
 ;; Path to HBA-style auth config
-;auth_hba_file =
+auth_hba_file = {{ pgbouncer_auth_hba_file | default(omit) }}
 
 ;; Query to use to fetch password from database.  Result
 ;; must have 2 columns - username and password hash.
-;auth_query = SELECT usename, passwd FROM pg_shadow WHERE usename=$1
+auth_query = {{ pgbouncer_auth_query | default('SELECT usename, passwd FROM pg_shadow WHERE usename=$1') }}
 
 ;;;
 ;;; Users allowed into database 'pgbouncer'
@@ -114,7 +111,7 @@ auth_file = /etc/pgbouncer/userlist.txt
 admin_users = {{ pgbouncer_admin_users | default([]) | join(', ') }}
 
 ;; comma-separated list of users who are just allowed to use SHOW command
-;stats_users = stats, root
+stats_users = {{ pgbouncer_stat_users | default([]) | join(', ') }}
 
 ;;;
 ;;; Pooler personality questions
@@ -129,7 +126,7 @@ pool_mode = {{ pgbouncer_pool_mode | default('session') }}
 ;; Query for cleaning connection immediately after releasing from
 ;; client.  No need to put ROLLBACK here, pgbouncer does not reuse
 ;; connections where transaction is left open.
-server_reset_query = DISCARD ALL
+server_reset_query = {{ pgbouncer_server_reset_query | default('DISCARD ALL') }}
 
 ;; Whether server_reset_query should run in all pooling modes.  If it
 ;; is off, server_reset_query is used only for session-pooling.
@@ -170,14 +167,14 @@ default_pool_size = {{ pgbouncer_default_pool_size | default(20) }}
 
 
 ;; Minimum number of server connections to keep in pool.
-;min_pool_size = 0
+min_pool_size = {{ pgbouncer_min_pool_size | default(0) }}
 
 ; how many additional connection to allow in case of trouble
-;reserve_pool_size = 0
+reserve_pool_size = {{ pgbouncer_reserve_pool_size | default(0) }}
 
 ;; If a clients needs to wait more than this many seconds, use reserve
 ;; pool.
-;reserve_pool_timeout = 5
+reserve_pool_timeout = {{ pgbouncer_reserve_pool_timeout | default(5) }}
 
 ;; Maximum number of server connections for a database
 ;max_db_connections = 0
@@ -321,7 +318,7 @@ log_disconnections = {{ pgbouncer_log_disconnections | default(1) }}
 
 ;; Custom resolv.conf file, to set custom DNS servers or other options
 ;; (default: empty = use OS settings)
-;resolv_conf = /etc/pgbouncer/resolv.conf
+;resolv_conf = {{ pgbouncer_confdir }}/resolv.conf
 
 ;;;
 ;;; Random stuff
@@ -341,4 +338,9 @@ log_disconnections = {{ pgbouncer_log_disconnections | default(1) }}
 ;job_name = pgbouncer
 
 ;; Read additional config from other file
-;%include /etc/pgbouncer/pgbouncer-other.ini
+{% if pgbouncer_conf_include is defined and pgbouncer_conf_include|length > 0 %}
+{% for config in pgbouncer_conf_include %}
+%include {{ pgbouncer_confdir }}/{{ config }}  
+{% endfor %}
+{% endif %}
+

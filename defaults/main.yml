@@ -10,11 +10,13 @@ pgbouncer_install_psql: false
 # possible values: `restart` or `reload` (see handlers)
 pgbouncer_service_state: reload
 
+pgbouncer_confdir: '/etc/pgbouncer'
 # array of username and password for the auth_file
 # any valid pgbouncer value is allowed (eg md5 hash)
 # eg:
 #   - username: user
 #     password: passwd
+pgbouncer_template_userlist: true
 pgbouncer_users: []
 
 # external connection properties
@@ -35,8 +37,8 @@ pgbouncer_users: []
 # - max_db_connections
 # there are other possible values but these are most common - see the pgbouncer
 # docs for more info
+pgbouncer_template_databases: true
 pgbouncer_databases: []
-
 # most other settings have their defaults but allowing overriding if desired.
 # to do this just prefix the configuration property with `pgbouncer_`.
 # be careful to use the right variable type and check templates/pgbouncer.ini.j2
@@ -48,3 +50,5 @@ pgbouncer_databases: []
 #pgbouncer_default_pool_size: 20
 # listen port
 #pgbouncer_listen_port: 5432
+
+pgbouncer_conf_include: ['pgbouncer.databases.ini']
