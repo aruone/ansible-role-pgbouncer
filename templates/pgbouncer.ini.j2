@@ -33,12 +33,11 @@ listen_port = {{ pgbouncer_listen_port | default(6432) }}
 
 ;; Unix socket is also used for -R.
 ;; On Debian it should be /var/run/postgresql
-;unix_socket_dir = /tmp
 ;unix_socket_mode = 0777
 ;unix_socket_group =
-unix_socket_dir = {{ pgbouncer_unix_socket_dir | default('/var/run/postgresql') }}
-logfile = {{ pgbouncer_logfile | default('/var/log/pgbouncer.log') }}
-pidfile = {{ pgbouncer_pidfile | default('var/run/postgresql/pgbouncer.pid') }}
+unix_socket_dir = {{ pgbouncer_unix_socket_dir }}
+logfile = {{ pgbouncer_logfile | default(pgbouncer_logdir + '/pgbouncer.log') }}
+pidfile = {{ pgbouncer_pidfile | default(pgbouncer_unix_socket_dir + '/pgbouncer.pid') }}
 
 ;;;
 ;;; TLS settings for accepting clients
@@ -94,7 +93,7 @@ client_tls_cert_file = {{ pgbouncer_client_tls_cert_file | default('') }}
 
 ;; any, trust, plain, md5, cert, hba, pam
 auth_type = {{ pgbouncer_auth_type | default('md5') }}
-auth_file = {{ pgbouncer_auth_file | default(pgbouncer_confdir + 'userlist.txt') }}
+auth_file = {{ pgbouncer_auth_file | default(pgbouncer_confdir + '/userlist.txt') }}
 auth_user = {{ pgbouncer_auth_user | default(omit) }}
 ;; Path to HBA-style auth config
 auth_hba_file = {{ pgbouncer_auth_hba_file | default(omit) }}
@@ -130,28 +129,28 @@ server_reset_query = {{ pgbouncer_server_reset_query | default('DISCARD ALL') }}
 
 ;; Whether server_reset_query should run in all pooling modes.  If it
 ;; is off, server_reset_query is used only for session-pooling.
-;server_reset_query_always = 0
+server_reset_query_always = {{ pgbouncer_server_reset_query_always | default(0) }}
 
 ;; Comma-separated list of parameters to ignore when given in startup
 ;; packet.  Newer JDBC versions require the extra_float_digits here.
-;ignore_startup_parameters = extra_float_digits
+ignore_startup_parameters = {{ pgbouncer_ignore_startup_parameters | default('extra_float_digits') }}
 
 ;; When taking idle server into use, this query is run first.
-;server_check_query = select 1
+server_check_query = {{ pgbouncer_server_check_query | default('select 1') }}
 
 ;; If server was used more recently that this many seconds ago,
 ; skip the check query.  Value 0 may or may not run in immediately.
-;server_check_delay = 30
+server_check_delay = {{ pgbouncer_server_check_delay | default(30) }}
 
 ;; Close servers in session pooling mode after a RECONNECT, RELOAD,
 ;; etc. when they are idle instead of at the end of the session.
-;server_fast_close = 0
+server_fast_close = {{ pgbouncer_server_fast_close | default(0) }}
 
 ;; Use <appname - host> as application_name on server.
 ;application_name_add_host = 0
 
 ;; Period for updating aggregated stats.
-;stats_period = 60
+stats_period = {{ pgbouncer_stats_period | default(60) }}
 
 ;;;
 ;;; Connection limits
@@ -201,13 +200,14 @@ log_connections = {{ pgbouncer_log_connections | default(1) }}
 log_disconnections = {{ pgbouncer_log_disconnections | default(1) }}
 
 ;; log error messages pooler sends to clients
-;log_pooler_errors = 1
+log_pooler_errors = {{ pgbouncer_log_pooler_errors | default(1) }}
+
 
 ;; write aggregated stats into log
-;log_stats = 1
+log_stats = {{ pgbouncer_log_stats| default(1) }}
 
 ;; Logging verbosity.  Same as -v switch on command line.
-;verbose = 0
+verbose = {{ pgbouncer_verbose | default(0) }}
 
 ;;;
 ;;; Timeouts
@@ -218,25 +218,25 @@ log_disconnections = {{ pgbouncer_log_disconnections | default(1) }}
 
 ;; Close server connection if its not been used in this time.  Allows
 ;; to clean unnecessary connections from pool after peak.
-;server_idle_timeout = 600
+server_idle_timeout = {{ pgbouncer_server_idle_timeout | default(600) }}
 
 ;; Cancel connection attempt if server does not answer takes longer.
-;server_connect_timeout = 15
+server_connect_timeout = {{ pgbouncer_server_connect_timeout | default(15) }}
 
 ;; If server login failed (server_connect_timeout or auth failure)
 ;; then wait this many second.
-;server_login_retry = 15
+server_login_retry = {{ pgbouncer_server_login_retry | default(15) }}
 
 ;; Dangerous.  Server connection is closed if query does not return in
 ;; this time.  Should be used to survive network problems, _not_ as
 ;; statement_timeout. (default: 0)
-;query_timeout = 0
+;query_timeout = {{ pgbouncer_query_timeout | d(0)}}
 
 ;; Dangerous.  Client connection is closed if the query is not
 ;; assigned to a server in this time.  Should be used to limit the
 ;; number of queued queries in case of a database or network
 ;; failure. (default: 120)
-;query_wait_timeout = 120
+query_wait_timeout = {{ pgbouncer_query_wait_timeout | d(120)}}
 
 ;; Dangerous.  Client connection is closed if no activity in this
 ;; time.  Should be used to survive network problems. (default: 0)

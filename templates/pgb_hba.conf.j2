@@ -1,0 +1,4 @@
+## {{ ansible_managed }}
+{% for item in pgbouncer_hba %}
+{{ item.type }}  {{ item.database}}  {{ item.user }} {{ item.address | d('') }}    {{ item.method }}
+{% endfor %}

@@ -5,12 +5,19 @@ pgbouncer_install_state: present
 # whether to install postgresql-client
 pgbouncer_install_psql: false
 
+
+# (can be dangerous!!!) mask postgresql service (if for example it has been installed and started as dependence by other package)
+pgbouncer_mask_postgresql_service: false
+
 # default to reload pgbouncer when configuration changes occur. if your
 # settings need a full service restart, change this to `restart`.
 # possible values: `restart` or `reload` (see handlers)
 pgbouncer_service_state: reload
 
 pgbouncer_confdir: '/etc/pgbouncer'
+pgbouncer_logdir: '/var/log/pgbouncer'
+pgbouncer_unix_socket_dir: '/var/run/postgresql'
+
 # array of username and password for the auth_file
 # any valid pgbouncer value is allowed (eg md5 hash)
 # eg:

@@ -12,6 +12,27 @@
     state: present
   when: pgbouncer_install_psql
 
+- name: mask default postgresql service if needed
+  systemd:
+    name: postgresql.service
+    state: stopped
+    enabled: false
+    masked: true
+  when: pgbouncer_mask_postgresql_service
+  tags: mask
+
+- name: Ensure needed directories exists with correct permissions
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0755
+    owner: postgres
+    group: postgres
+  loop: 
+    - "{{ pgbouncer_confdir }}"
+    - "{{ pgbouncer_logdir }}"
+    - "{{ pgbouncer_unix_socket_dir }}"
+
 - name: template main config file
   template:
     src: templates/pgbouncer.ini.j2
@@ -20,6 +41,17 @@
     owner: postgres
     group: postgres
     mode: 0640
+  notify: "{{ pgbouncer_service_state }} pgbouncer"
+
+- name: template auth hba file
+  template:
+    src: templates/pgb_hba.conf.j2
+    dest: "{{ pgbouncer_auth_hba_file }}"
+    backup: yes
+    owner: postgres
+    group: postgres
+    mode: 0640
+  when: pgbouncer_auth_hba_file is defined and pgbouncer_hba|length > 0
   notify: "{{ pgbouncer_service_state }} pgbouncer"
 
 - name: template database section of config file
